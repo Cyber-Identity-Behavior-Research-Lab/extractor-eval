@@ -5,6 +5,8 @@ requires-python = ">=3.11"
 dependencies = [
     "extractor-eval",
     "openface-test==0.1.26",
+    # pyarrow 26 requires numpy >= 2; openface-test pins numpy 1.26.4. Its wheels declare no numpy dependency, so uv cannot catch this.
+    "pyarrow<26",
     "torch>=2.14.1",
     "torchvision>=0.29.1",
 ]

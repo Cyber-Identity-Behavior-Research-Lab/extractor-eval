@@ -19,6 +19,20 @@ MANIFEST_PATH = DATA_DIR / "clips_manifest.csv"
 # Columns the manifest must have. video_path is relative to data/.
 MANIFEST_COLUMNS = ["clip_id", "video_path"]
 
+# Still images are treated as one-frame clips (frame 0, timestamp 0 ms).
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
+
+
+def is_image(path):
+    return Path(path).suffix.lower() in IMAGE_SUFFIXES
+
+
+def _read_image(path):
+    image = cv2.imread(str(path), cv2.IMREAD_COLOR)
+    if image is None:
+        raise IOError(f"cannot read image {path}")
+    return image
+
 
 def load_manifest(path=MANIFEST_PATH):
     manifest = pd.read_csv(path, dtype={"clip_id": str})
@@ -38,6 +52,9 @@ def clip_path(row):
 def video_info(video_path):
     """Container metadata. n_frames comes from the file header and can be wrong;
     count the frames from iter_frames for the real number."""
+    if is_image(video_path):
+        height, width = _read_image(video_path).shape[:2]
+        return {"fps": None, "n_frames": 1, "width": width, "height": height}
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise IOError(f"cannot open {video_path}")
@@ -61,7 +78,13 @@ def iter_frames(video_path, rgb=False):
     Frames the decoder flushes at the end of a stream can have no timestamp
     (OpenCV reports 0.0). Those get the previous timestamp plus the previous
     frame interval, and a warning is printed.
+
+    A still image yields a single frame: (0, 0.0, image).
     """
+    if is_image(video_path):
+        image = _read_image(video_path)
+        yield 0, 0.0, cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if rgb else image
+        return
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise IOError(f"cannot open {video_path}")
