@@ -1,0 +1,36 @@
+# Third-party model repos (each is its own git clone; the commit is recorded in its notebook's model card)
+models/
+
+# Test clips are large and contain researchers' faces: keep them out of git.
+# Small text files (manifest, ground truth) are still tracked.
+data/**/*.mp4
+data/**/*.avi
+data/**/*.mov
+data/**/*.mkv
+data/**/*.wav
+
+# Model outputs are regenerable from the notebooks
+outputs/*
+!outputs/.gitkeep
+
+# Model weights
+*.pth
+*.pt
+*.pkl
+*.ckpt
+*.onnx
+*.bin
+*.tar
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local conda env folders (env *files* in envs/ are tracked)
+envs/*/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
