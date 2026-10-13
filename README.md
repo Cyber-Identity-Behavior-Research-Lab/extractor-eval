@@ -9,7 +9,7 @@ This repo compares candidate models for extracting action units (AU), gaze, and 
 | `models/` | Cloned third-party repos. Their code is not edited. These are git-ignored. |
 | `envs/` | One conda env file per model. |
 | `data/` | Shared test clips and ground truth. Treat as read-only. Video files are git-ignored. |
-| `src/` | Shared helpers: `io.py`, `schema.py`, `plots.py`. |
+| `src/` | Shared helpers: `clip_io.py`, `schema.py`, `plots.py`. |
 | `notebooks/` | One notebook per model, copied from `00_template.ipynb`. |
 | `outputs/` | `<model>/<clip_id>.parquet` in the common schema. These are git-ignored. |
 
