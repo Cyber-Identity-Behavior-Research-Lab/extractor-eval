@@ -36,6 +36,8 @@ def clip_path(row):
 
 
 def video_info(video_path):
+    """Container metadata. n_frames comes from the file header and can be wrong;
+    count the frames from iter_frames for the real number."""
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise IOError(f"cannot open {video_path}")
@@ -53,24 +55,40 @@ def iter_frames(video_path, rgb=False):
     """Yield (frame, timestamp_ms, image) for every frame in the video.
 
     timestamp_ms is the presentation timestamp from the container, so it stays
-    correct for variable-frame-rate clips. image is BGR uint8 unless rgb=True.
+    correct for variable-frame-rate clips. It does not necessarily start at 0.
+    image is BGR uint8 unless rgb=True.
+
+    Frames the decoder flushes at the end of a stream can have no timestamp
+    (OpenCV reports 0.0). Those get the previous timestamp plus the previous
+    frame interval, and a warning is printed.
     """
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise IOError(f"cannot open {video_path}")
     try:
         frame = 0
+        prev_ts, prev_step, n_filled = None, None, 0
         while True:
             ok, image = cap.read()
             if not ok:
                 break
             timestamp_ms = float(cap.get(cv2.CAP_PROP_POS_MSEC))
+            if prev_ts is not None and timestamp_ms <= prev_ts:
+                if prev_step is None:
+                    raise ValueError(f"{video_path}: no usable timestamp at frame {frame}")
+                timestamp_ms = prev_ts + prev_step
+                n_filled += 1
+            elif prev_ts is not None:
+                prev_step = timestamp_ms - prev_ts
+            prev_ts = timestamp_ms
             if rgb:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             yield frame, timestamp_ms, image
             frame += 1
     finally:
         cap.release()
+    if n_filled:
+        print(f"warning: {video_path}: {n_filled} frame(s) had no timestamp; extrapolated")
 
 
 def output_path(model, clip_id):

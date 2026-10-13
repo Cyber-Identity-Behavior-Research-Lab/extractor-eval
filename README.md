@@ -7,7 +7,7 @@ This repo compares candidate models for extracting action units (AU), gaze, and 
 | Folder | Contents |
 |---|---|
 | `models/` | Cloned third-party repos. Their code is not edited. These are git-ignored. |
-| `envs/` | One conda env file per model. |
+| `envs/` | One uv env per model: `envs/<model>/pyproject.toml` + `uv.lock`. |
 | `data/` | Shared test clips and ground truth. Treat as read-only. Video files are git-ignored. |
 | `src/` | Shared helpers: `clip_io.py`, `schema.py`, `plots.py`. |
 | `notebooks/` | One notebook per model, copied from `00_template.ipynb`. |
@@ -16,7 +16,7 @@ This repo compares candidate models for extracting action units (AU), gaze, and 
 ## Adding a model
 
 1. Clone the model's repo into `models/`.
-2. Create `envs/<model>.yml` and its conda env. Do not install into `base`.
+2. Create the env in `envs/<model>/` following CLAUDE.md "Creating a model environment".
 3. Copy `notebooks/00_template.ipynb` to `notebooks/NN_<model>.ipynb`.
 4. Work through the notebook's sections in order:
    1. model card
