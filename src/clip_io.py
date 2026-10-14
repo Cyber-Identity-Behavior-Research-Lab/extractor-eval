@@ -34,8 +34,12 @@ def _read_image(path):
     return image
 
 
-def load_manifest(test_set):
-    """Read data/<test_set>/manifest.csv. Adds a test_set column used by clip_path."""
+def load_manifest(test_set, categories=None):
+    """Read data/<test_set>/manifest.csv. Adds a test_set column used by clip_path.
+
+    categories: optional list of values in the manifest's category column
+    (e.g. ["gaze", "emotion"]); only those rows are kept. None keeps every row.
+    """
     path = DATA_DIR / test_set / MANIFEST_NAME
     manifest = pd.read_csv(path, dtype={"clip_id": str})
     missing = [c for c in MANIFEST_COLUMNS if c not in manifest.columns]
@@ -43,6 +47,13 @@ def load_manifest(test_set):
         raise ValueError(f"{path} is missing columns: {missing}")
     if manifest["clip_id"].duplicated().any():
         raise ValueError(f"{path} has duplicate clip_id values")
+    if categories is not None:
+        if "category" not in manifest.columns:
+            raise ValueError(f"{path} has no category column to filter on")
+        unknown = sorted(set(categories) - set(manifest["category"]))
+        if unknown:
+            raise ValueError(f"{path} has no rows with category {unknown}")
+        manifest = manifest[manifest["category"].isin(categories)].reset_index(drop=True)
     manifest.insert(2, "test_set", test_set)
     missing_files = [p for p in manifest["path"] if not (DATA_DIR / test_set / p).exists()]
     if missing_files:
@@ -137,9 +148,16 @@ def load_output(model, clip_id):
     return pd.read_parquet(output_path(model, clip_id))
 
 
-def load_outputs(model):
-    """All of a model's outputs concatenated into one DataFrame."""
+def load_outputs(model, clip_ids=None):
+    """A model's outputs concatenated into one DataFrame.
+
+    clip_ids: optional list of clips to load (e.g. manifest["clip_id"]), so
+    files left over from earlier runs on other clips are skipped. None loads all.
+    """
     paths = sorted((OUTPUTS_DIR / model).glob("*.parquet"))
+    if clip_ids is not None:
+        wanted = set(clip_ids)
+        paths = [p for p in paths if p.stem in wanted]
     if not paths:
         raise FileNotFoundError(f"no outputs for model {model!r} in {OUTPUTS_DIR / model}")
     return pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True)
