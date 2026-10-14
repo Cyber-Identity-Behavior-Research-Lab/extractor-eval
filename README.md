@@ -1,4 +1,4 @@
-# Feature extractor evaluation (MuSES)
+# Feature extractor evaluation
 
 This repo compares candidate models for extracting action units (AU), gaze, and head pose. Every model runs on the same shared set of test clips. The goal is to choose extractors before building the preprocessing pipeline.
 
