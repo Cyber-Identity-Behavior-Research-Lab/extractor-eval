@@ -7,7 +7,8 @@ set of test clips before building the preprocessing pipeline.
 ## Structure
 - `models/`              cloned third-party repos. Do not edit their code.
 - `envs/<model>/`        one uv project per model (pyproject.toml, uv.lock, .venv/).
-- `data/`                shared clips, clips_manifest.csv, ground truth. Read only.
+- `data/<test_set>/`     one folder per test set (clips + manifest.csv, ground truth).
+                         Read only. manifest.csv paths are relative to its folder.
 - `src/`                 shared helpers (io, schema, plots), installable via the
                          root pyproject.toml.
 - `notebooks/`           one notebook per model, copied from 00_template.ipynb,

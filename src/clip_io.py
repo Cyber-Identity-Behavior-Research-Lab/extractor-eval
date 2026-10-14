@@ -14,10 +14,10 @@ from src.schema import validate
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "data"
 OUTPUTS_DIR = REPO_ROOT / "outputs"
-MANIFEST_PATH = DATA_DIR / "clips_manifest.csv"
-
-# Columns the manifest must have. video_path is relative to data/.
-MANIFEST_COLUMNS = ["clip_id", "video_path"]
+# Each test set is a folder under data/ with its own manifest.csv.
+# path is relative to that folder; any other columns are free-form notes.
+MANIFEST_NAME = "manifest.csv"
+MANIFEST_COLUMNS = ["clip_id", "path"]
 
 # Still images are treated as one-frame clips (frame 0, timestamp 0 ms).
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
@@ -34,19 +34,25 @@ def _read_image(path):
     return image
 
 
-def load_manifest(path=MANIFEST_PATH):
+def load_manifest(test_set):
+    """Read data/<test_set>/manifest.csv. Adds a test_set column used by clip_path."""
+    path = DATA_DIR / test_set / MANIFEST_NAME
     manifest = pd.read_csv(path, dtype={"clip_id": str})
     missing = [c for c in MANIFEST_COLUMNS if c not in manifest.columns]
     if missing:
         raise ValueError(f"{path} is missing columns: {missing}")
     if manifest["clip_id"].duplicated().any():
         raise ValueError(f"{path} has duplicate clip_id values")
+    manifest.insert(2, "test_set", test_set)
+    missing_files = [p for p in manifest["path"] if not (DATA_DIR / test_set / p).exists()]
+    if missing_files:
+        raise FileNotFoundError(f"{path} lists files that don't exist: {missing_files}")
     return manifest
 
 
 def clip_path(row):
     """Absolute video path for a manifest row (Series or namedtuple)."""
-    return DATA_DIR / row.video_path
+    return DATA_DIR / row.test_set / row.path
 
 
 def video_info(video_path):
