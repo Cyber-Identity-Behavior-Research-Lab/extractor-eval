@@ -58,7 +58,8 @@ EXTRA_PREFIX = "extra_"
 
 AU_INT_RANGE = (0.0, 5.0)
 # Loose sanity limits; values outside these almost always mean radians or a sign/axis bug.
-GAZE_LIMIT_DEG = 90.0
+# Gaze is relative to the camera, so a turned head can legitimately push it past 90 deg.
+GAZE_LIMIT_DEG = 180.0
 POSE_LIMIT_DEG = 180.0
 
 
